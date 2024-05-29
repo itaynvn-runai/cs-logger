@@ -1,0 +1,71 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: log-extractor
+  namespace: cs
+spec:
+  schedule: "* * * * *"
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: runner
+            image: busybox
+            command:
+            - /bin/sh
+            - -c
+            - |
+              #!/bin/bash
+              mkdir -p /data/extracted_logs
+              wget https://dl.min.io/client/mc/release/linux-amd64/mc
+              chmod +x ./mc && mv ./mc /bin/ && mc --version
+              echo "###   Connecting to new bucket..."
+              mc alias set myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
+              echo "###   Listing archive files in new bucket..."
+              output=$(mc ls myminio/new-log-archives)
+              echo $output
+              echo "$output" | while read -r line; do
+                  file_name=$(echo "$line" | awk '{print $6}')
+                  if echo "$file_name" | grep -q ".tar"; then
+                      echo "###   Downloading archive $file_name..."
+                      mc cp --recursive myminio/new-log-archives/$file_name /data
+                      echo "###   Archive download complete, listing path..."
+                      file_name_path="/data/$file_name"
+                      ls -lah $file_name_path
+                      echo "###   Starting extraction process..."
+                      tar -xf $file_name_path -C /data/extracted_logs/
+                      subfolder="${file_name%.*.*}"
+                      subfolder_path="/data/extracted_logs/$subfolder"
+                      echo "###   Extracted $file_name to $subfolder_path"
+                      ls -la $subfolder_path
+                      rm -rf $file_name_path
+                      echo "###   Deleted $file_name_path (locally)"
+                      mc mv myminio/new-log-archives/$file_name myminio/old-log-archives/
+                      echo "###   Moved $file_name to old bucket"
+                  else
+                      echo "###   No archive files found."
+                  fi
+              done
+              echo "###   Extraction process completed."
+            volumeMounts:
+            - name: extracted-logs
+              mountPath: /data
+            env:
+            - name: MINIO_ROOT_USER
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: rootUser
+            - name: MINIO_ROOT_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: minio
+                  key: rootPassword
+          restartPolicy: OnFailure
+          volumes:
+          - name: extracted-logs
+            persistentVolumeClaim:
+              claimName: extracted-logs

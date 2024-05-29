@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: t3sting-zone
+  namespace: cs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: t3sting-zone
+  template:
+    metadata:
+      labels:
+        app: t3sting-zone
+    spec:
+      containers:
+      - name: runner
+        image: busybox
+        command:
+        - sleep
+        - infinity
+        volumeMounts:
+        - name: extracted-logs
+          mountPath: /data
+        env:
+        - name: MINIO_ROOT_USER
+          valueFrom:
+            secretKeyRef:
+              name: minio
+              key: rootUser
+        - name: MINIO_ROOT_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              name: minio
+              key: rootPassword
+      volumes:
+      - name: extracted-logs
+        persistentVolumeClaim:
+          claimName: extracted-logs

@@ -1,0 +1,14 @@
+adminUser: admin
+adminPassword: admin
+
+persistence:
+  enabled: true
+  size: 10Gi
+
+datasources:
+  datasources.yaml:
+    apiVersion: 1
+    datasources:
+    - name: Loki
+      type: loki
+      url: http://loki:3100
