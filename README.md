@@ -1,13 +1,20 @@
 # cs-logger
-upload log archives and view them neatly in grafana
+stack for uploading log archives and viewing log files in a centralized location
 
-## Install from scratch
+## Install
+
+### Create namespace
+```
+kubectl create ns cs
+```
 
 ### NFS Provisioner
 *Enables using an RWX storage class.*
 
 Install:
 ```
+helm repo add stable https://charts.helm.sh/stable
+
 helm install nfs-provisioner stable/nfs-server-provisioner \
 --set persistence.enabled=true \
 --set persistence.size="100Gi" \
@@ -60,7 +67,15 @@ kubectl apply -f promtail_configmap.yaml
 kubectl apply -f promtail_deploy.yaml
 ```
 
-### Log extractor
+### Log extractor + dashboard creator
+*cronjob that runs each minute, scans bucket for new archives, extracts their content and creates a grafana dashboard for each folder*
+
+Create script configmap:
+```
+kubectl create configmap scripts \
+  --from-file=downloader_extractor.sh \
+  --from-file=grafana_dashboard_automation.py
+```
 
 Create PVC:
 ```
@@ -71,9 +86,6 @@ Create CronJob:
 ```
 kubectl apply -f log_extractor_cronjob.yaml
 ```
-
-### Dashboard auto-creator
-TBA
 
 ## Operation
 

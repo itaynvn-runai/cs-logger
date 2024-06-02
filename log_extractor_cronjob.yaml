@@ -5,7 +5,7 @@ metadata:
   namespace: cs
 spec:
   schedule: "* * * * *"
-  successfulJobsHistoryLimit: 3
+  successfulJobsHistoryLimit: 2
   failedJobsHistoryLimit: 5
   jobTemplate:
     spec:
@@ -13,46 +13,42 @@ spec:
         spec:
           containers:
           - name: runner
-            image: busybox
+            image: python:3.10
             command:
             - /bin/sh
             - -c
             - |
               #!/bin/bash
+              chmod +x /scripts/*
               mkdir -p /data/extracted_logs
               wget https://dl.min.io/client/mc/release/linux-amd64/mc
               chmod +x ./mc && mv ./mc /bin/ && mc --version
               echo "###   Connecting to new bucket..."
               mc alias set myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
-              echo "###   Listing archive files in new bucket..."
-              output=$(mc ls myminio/new-log-archives)
-              echo $output
-              echo "$output" | while read -r line; do
-                  file_name=$(echo "$line" | awk '{print $6}')
-                  if echo "$file_name" | grep -q ".tar"; then
-                      echo "###   Downloading archive $file_name..."
-                      mc cp --recursive myminio/new-log-archives/$file_name /data
-                      echo "###   Archive download complete, listing path..."
-                      file_name_path="/data/$file_name"
-                      ls -lah $file_name_path
-                      echo "###   Starting extraction process..."
-                      tar -xf $file_name_path -C /data/extracted_logs/
-                      subfolder="${file_name%.*.*}"
-                      subfolder_path="/data/extracted_logs/$subfolder"
-                      echo "###   Extracted $file_name to $subfolder_path"
-                      ls -la $subfolder_path
-                      rm -rf $file_name_path
-                      echo "###   Deleted $file_name_path (locally)"
-                      mc mv myminio/new-log-archives/$file_name myminio/old-log-archives/
-                      echo "###   Moved $file_name to old bucket"
-                  else
-                      echo "###   No archive files found."
-                  fi
+              while true; do
+                output=$(mc ls myminio/new-log-archives)
+                if echo "$output" | grep -q "\.tar\.gz"; then
+                  echo "###   Found new archive files!"
+                  echo "$output" | while read -r line; do
+                    file_name=$(echo "$line" | awk '{print $6}')
+                    subfolder="${file_name%.*.*}"
+                    echo "###   Starting extraction of file $file_name"
+                    /scripts/downloader_extractor.sh $file_name
+                    echo "###   Building grafana dashboard for file $file_name"
+                    python grafana_dashboard_automation.py --subfolder $subfolder
+                    echo "###   Done handling file $file_name"
+                  done
+                  exit 1
+                else
+                  echo "###   No archive files found, trying again..."
+                  sleep 10
+                fi
               done
-              echo "###   Extraction process completed."
             volumeMounts:
             - name: extracted-logs
               mountPath: /data
+            - name: scripts
+              mountPath: /scripts
             env:
             - name: MINIO_ROOT_USER
               valueFrom:
@@ -64,8 +60,21 @@ spec:
                 secretKeyRef:
                   name: minio
                   key: rootPassword
+            - name: GRAFANA_ADMIN_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: grafana
+                  key: admin-password
+            - name: GRAFANA_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: grafana
+                  key: admin-user
           restartPolicy: OnFailure
           volumes:
           - name: extracted-logs
             persistentVolumeClaim:
               claimName: extracted-logs
+          - name: scripts
+            configMap:
+              name: scripts
