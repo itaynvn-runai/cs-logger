@@ -11,7 +11,7 @@ loki:
       reject_old_samples: true
       reject_old_samples_max_age: 168h
       max_entries_limit_per_query: 1000000
-      split_queries_by_interval: 15m
+      split_queries_by_interval: 24h
       max_cache_freshness_per_query: 10m
       per_stream_rate_limit: 512M
       per_stream_rate_limit_burst: 1024M
@@ -21,3 +21,5 @@ loki:
       max_label_value_length: 20480
       max_label_name_length: 10240
       max_label_names_per_series: 300
+    frontend:
+      max_outstanding_per_tenant: 1024

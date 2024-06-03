@@ -22,4 +22,4 @@ data:
             - localhost
           labels:
             job: logfiles
-            __path__: /logs/extracted_logs/**/*
+            __path__: /data/extracted_logs/**/*

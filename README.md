@@ -45,8 +45,23 @@ grafana grafana/grafana \
 --debug
 ```
 
+once grafana is up and running, create an API key:
+```
+export GRAFANA_API_KEY=$(kubectl -n cs exec deploy/grafana -- \
+sh -c 'curl -u $GF_SECURITY_ADMIN_USER:$GF_SECURITY_ADMIN_PASSWORD -X POST \
+-H "Content-Type: application/json" \
+-d "{\"name\":\"logger-app-key\",\"role\":\"Admin\"}" \
+http://localhost:3000/api/auth/keys' | jq -r .key);
+kubectl -n cs create secret generic grafana-api-key --from-literal=grafana-api-key="$GRAFANA_API_KEY"
+```
+
+optional - verify key is available:
+```
+kubectl -n cs get secret grafana-api-key -o jsonpath="{.data.grafana-api-key}" | base64 --decode
+```
+
 ### Loki
-*Data source plugin for grafana, allows ingestion of raw text files.*
+*Data source plugin for grafana*
 
 install:
 ```
@@ -67,12 +82,12 @@ kubectl apply -f promtail_configmap.yaml
 kubectl apply -f promtail_deploy.yaml
 ```
 
-### Log extractor + dashboard creator
-*cronjob that runs each minute, scans bucket for new archives, extracts their content and creates a grafana dashboard for each folder*
+### Log archive handler
+*app that scans bucket for new archives, extracts their content and creates a grafana dashboard for each folder*
 
 Create script configmap:
 ```
-kubectl create configmap scripts \
+kubectl -n cs create configmap scripts \
   --from-file=downloader_extractor.sh \
   --from-file=grafana_dashboard_automation.py
 ```
@@ -82,9 +97,9 @@ Create PVC:
 kubectl apply -f extracted_logs_pvc.yaml
 ```
 
-Create CronJob:
+Create deployment:
 ```
-kubectl apply -f log_extractor_cronjob.yaml
+kubectl apply -f log_handler_deploy.yaml
 ```
 
 ## Operation
@@ -107,3 +122,6 @@ kubectl -n cs port-forward deploy/grafana 3000
 ```
 
 enter [http://localhost:3000/](http://localhost:3000/)
+go to "Dashboards", and select the dashboard with the name of the log archive you uploaded.
+in the dashboard, there will be a panel for each log file.
+to expand the panel to full screen, click "Show context" icon on any line in that log file.
