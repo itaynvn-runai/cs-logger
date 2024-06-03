@@ -133,12 +133,12 @@ tmux kill-ses -t minio
 ```
 
 ### Upload log archives
-1. enter [http://localhost:9001/](http://localhost:9001/) (creds are in values/secret)
+1. enter minio UI: [http://localhost:9001/](http://localhost:9001/) (creds are in values/secret)
 2. choose the "**new-log-archives**" bucket
 3. upload the `tar.gz` file
 
 ### Display logs
-1. enter [http://localhost:3000/](http://localhost:3000/) (creds are in values/secret)
+1. enter grafana UI: [http://localhost:3000/](http://localhost:3000/) (creds are in values/secret)
 2. select "**Dashboards**", then choose the dashboard with the name of the log archive you uploaded.
 3. in the dashboard, there will be a panel for each log file.
 4. to expand the panel to full screen, click "**Show context**" icon on any line in that log file.
