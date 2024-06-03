@@ -103,25 +103,42 @@ kubectl apply -f log_handler_deploy.yaml
 ```
 
 ## Operation
-
-### Uploading Logs
-
+### Expose services locally
 with kubeconfig in-place, expose minio and grafana UI locally:
 ```
 kubectl -n cs port-forward deploy/minio 9001
-```
-enter [http://localhost:9001/](http://localhost:9001/)
-choose the "new-log-archives" bucket
-upload the `tar.gz` file.
-
-### Viewing logs
-
-expose grafana:
-```
 kubectl -n cs port-forward deploy/grafana 3000
 ```
+its recommended to run port-forward in detached shells, to make sure it doesn't stop by mistake.
 
-enter [http://localhost:3000/](http://localhost:3000/)
-go to "Dashboards", and select the dashboard with the name of the log archive you uploaded.
-in the dashboard, there will be a panel for each log file.
-to expand the panel to full screen, click "Show context" icon on any line in that log file.
+- use tmux for this purpose:
+```
+brew install tmux
+```
+- then expose minio and grafana in detached shells:
+```
+tmux new-session -d -s grafana 'kubectl -n cs port-forward deploy/grafana 3000'
+tmux new-session -d -s minio 'kubectl -n cs port-forward deploy/minio 9001'
+```
+- **optional:** attach to a running session:
+```
+tmux a -t grafana
+tmux a -t minio
+```
+- **optional:** detach from current session: press `CTRL`+`B`, then press `D`
+- **optional:**  terminate session:
+```
+tmux kill-ses -t grafana
+tmux kill-ses -t minio
+```
+
+### Upload log archives
+1. enter [http://localhost:9001/](http://localhost:9001/) (creds are in values/secret)
+2. choose the "**new-log-archives**" bucket
+3. upload the `tar.gz` file
+
+### Display logs
+1. enter [http://localhost:3000/](http://localhost:3000/) (creds are in values/secret)
+2. select "**Dashboards**", then choose the dashboard with the name of the log archive you uploaded.
+3. in the dashboard, there will be a panel for each log file.
+4. to expand the panel to full screen, click "**Show context**" icon on any line in that log file.
