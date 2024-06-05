@@ -39,7 +39,7 @@ spec:
                 echo "###   Starting extraction of file $file_name"
                 ./downloader_extractor.sh $file_name
                 echo "###   Building grafana dashboard for file $file_name"
-                python grafana_dashboard_automation.py --subfolder $subfolder
+                python grafana_dashboard_automation.py --mode new --subfolder $subfolder
                 echo "###   Done handling file $file_name"
               done
             else
