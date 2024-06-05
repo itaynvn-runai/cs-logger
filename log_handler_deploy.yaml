@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: runner
-        image: busybox
+        image: nginx
         command:
         - /bin/sh
         - -c

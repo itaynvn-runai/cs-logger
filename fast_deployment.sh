@@ -20,9 +20,7 @@ helm install minio minio/minio \
 -n cs -f minio_values.yaml --debug
 
 ### Log archive handler
-kubectl -n cs create configmap scripts \
-  --from-file=downloader_extractor.sh \
-  --from-file=grafana_dashboard_automation.py
+kubectl -n cs create configmap scripts --from-file=downloader_extractor.sh
 kubectl apply -f extracted_logs_pvc.yaml
 kubectl apply -f log_handler_deploy.yaml
 

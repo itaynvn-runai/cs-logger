@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: runner
-        image: python:3.10
+        image: nginx
         command:
         - sleep
         - infinity
@@ -35,21 +35,6 @@ spec:
             secretKeyRef:
               name: minio
               key: rootPassword
-        - name: GRAFANA_ADMIN_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: grafana
-              key: admin-password
-        - name: GRAFANA_ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: grafana
-              key: admin-user
-        - name: GRAFANA_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: grafana-api-key
-              key: grafana-api-key
       volumes:
       - name: extracted-logs
         persistentVolumeClaim:
