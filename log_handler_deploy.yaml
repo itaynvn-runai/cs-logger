@@ -15,7 +15,7 @@ spec:
     spec:
       containers:
       - name: runner
-        image: python:3.10
+        image: busybox
         command:
         - /bin/sh
         - -c
@@ -23,12 +23,11 @@ spec:
           #!/bin/bash
           mkdir -p /data/extracted_logs
           echo "###   Fetching Min.IO Client..."
-          wget https://dl.min.io/client/mc/release/linux-amd64/mc
+          curl -o "mc" https://dl.min.io/client/mc/release/linux-amd64/mc
           chmod +x ./mc && mv ./mc /bin/ && mc --version
           echo "###   Connecting to new bucket..."
           mc alias set myminio http://minio:9000 $MINIO_ROOT_USER $MINIO_ROOT_PASSWORD
           cd /scripts
-          pip install --upgrade pip requests
           while true; do
             output=$(mc ls myminio/new-log-archives)
             if echo "$output" | grep -q "\.tar\.gz"; then
@@ -38,8 +37,6 @@ spec:
                 subfolder="${file_name%.*.*}"
                 echo "###   Starting extraction of file $file_name"
                 ./downloader_extractor.sh $file_name
-                echo "###   Building grafana dashboard for file $file_name"
-                python grafana_dashboard_automation.py --mode new --subfolder $subfolder
                 echo "###   Done handling file $file_name"
               done
             else
@@ -63,21 +60,6 @@ spec:
             secretKeyRef:
               name: minio
               key: rootPassword
-        - name: GRAFANA_ADMIN_USERNAME
-          valueFrom:
-            secretKeyRef:
-              name: grafana
-              key: admin-password
-        - name: GRAFANA_ADMIN_PASSWORD
-          valueFrom:
-            secretKeyRef:
-              name: grafana
-              key: admin-user
-        - name: GRAFANA_API_KEY
-          valueFrom:
-            secretKeyRef:
-              name: grafana-api-key
-              key: grafana-api-key
       volumes:
       - name: extracted-logs
         persistentVolumeClaim:
@@ -86,4 +68,3 @@ spec:
         configMap:
           name: scripts
           defaultMode: 0777
-

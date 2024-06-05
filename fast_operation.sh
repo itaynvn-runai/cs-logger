@@ -13,8 +13,8 @@ then
     echo "sessions already running:"
     tmux ls
 else
-    echo "no sessions found, exposing minio and grafana in detached shells:"
-    tmux new-session -d -s grafana 'kubectl -n cs port-forward deploy/grafana 3000';
+    echo "no sessions found, exposing services in detached shells:"
+    tmux new-session -d -s vscode 'kubectl -n cs port-forward deploy/code-server 8080'
     tmux new-session -d -s minio 'kubectl -n cs port-forward deploy/minio 9001'
     tmux ls
 fi
@@ -28,5 +28,5 @@ check_address() {
     echo "$address is available!"
 }
 
-check_address "http://localhost:3000"
 check_address "http://localhost:9001"
+check_address "http://localhost:8080"
