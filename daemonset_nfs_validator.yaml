@@ -1,0 +1,39 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: nfs-common-validator
+spec:
+  selector:
+    matchLabels:
+      name: install-nfs-common
+  template:
+    metadata:
+      labels:
+        name: install-nfs-common
+    spec:
+      containers:
+      - name: install-nfs-common
+        image: ubuntu:20.04
+        command: ["/bin/bash", "-c"]
+        args:
+        - |
+          if ! dpkg -l | grep -q nfs-common; then
+            apt-get update && apt-get install -y nfs-common
+            if ! dpkg -l | grep -q nfs-common; then
+              echo "Error: nfs-common installation failed"
+              exit 1
+            fi
+          fi
+          echo "nfs-common installation check complete"
+          sleep infinity
+        securityContext:
+          privileged: true
+      tolerations:
+      - key: node.kubernetes.io/not-ready
+        operator: Exists
+        effect: NoExecute
+      - key: node.kubernetes.io/unreachable
+        operator: Exists
+        effect: NoExecute
+      nodeSelector:
+        kubernetes.io/os: linux

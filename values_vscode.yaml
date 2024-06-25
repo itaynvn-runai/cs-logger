@@ -1,0 +1,32 @@
+extraInitContainers: |
+  - name: extension-installer
+    image: {{ .Values.image.repository }}:{{ .Values.image.tag }}
+    imagePullPolicy: IfNotPresent
+    command:
+      - sh
+      - -c
+      - |
+        curl -L https://github.com/mfoulks3200/har-analyzer/releases/download/0.0.7/har-analyzer-0.0.7.vsix > har-analyzer.vsix
+        code-server --install-extension har-analyzer.vsix
+        code-server --install-extension IBM.output-colorizer
+        echo '{"workbench.colorTheme": "Visual Studio Dark", "workbench.editorLargeFileConfirmation": 30}' > /home/coder/.local/share/code-server/User/settings.json
+        cat /home/coder/.local/share/code-server/User/settings.json
+    volumeMounts:
+      - name: data
+        mountPath: /home/coder
+
+extraVolumeMounts:
+- name: extracted-logs
+  mountPath: /data
+  readOnly: true
+  existingClaim: extracted-logs
+
+extraArgs:
+- --disable-telemetry
+- /data/extracted_logs
+
+password: admin
+
+extraVars:
+- name: DEFAULT_WORKSPACE
+  value: /data/extracted_logs

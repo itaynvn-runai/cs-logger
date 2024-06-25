@@ -1,0 +1,19 @@
+rootUser: admin
+rootPassword: admin123xyz
+buckets:
+- name: new-log-archives
+  purge: false
+  versioning: false
+  objectlocking: false
+- name: new-single-files
+  purge: false
+  versioning: false
+  objectlocking: false
+- name: done
+  purge: false
+  versioning: false
+  objectlocking: false
+mode: standalone
+persistence:
+  enabled: true
+  size: 20Gi
