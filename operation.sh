@@ -6,6 +6,28 @@ if [ -z "$NS" ]; then
     NS="cs"
 fi
 
+expose() {
+    local service_name=$1
+    local port=$2
+    local ns=$NS
+
+    if tmux ls 2>/dev/null | grep -qE "^${service_name}:"; then
+        echo "Session for ${service_name} is already running."
+        tmux ls
+    else
+        echo "No session for ${service_name} found, exposing service in a detached shell:"
+        tmux new-session -d -s ${service_name} "kubectl -n $ns port-forward deploy/${service_name} ${port}"
+        tmux ls
+    fi
+
+    address="http://localhost:${port}"
+    until curl -s --output /dev/null --head --fail "$address"; do
+        echo "Waiting for $address to become available..."
+        sleep 5
+    done
+    echo "$service_name is available at $address!"
+}
+
 echo "activating cs-logger stack in '$NS' namespace"
 
 if command -v tmux &> /dev/null
@@ -16,25 +38,7 @@ else
     brew install tmux
 fi
 
-if tmux ls 2>/dev/null | grep -qE '^(grafana|minio):'
-then
-    echo "sessions already running:"
-    tmux ls
-else
-    echo "no sessions found, exposing services in detached shells:"
-    tmux new-session -d -s vscode "kubectl -n $NS port-forward deploy/code-server 8080"
-    tmux new-session -d -s minio "kubectl -n $NS port-forward deploy/minio 9001"
-    tmux ls
-fi
+expose "code-server" 8080
+expose "minio" 9001
 
-check_address() {
-    local address=$1
-    until curl -s --output /dev/null --head --fail "$address"; do
-        echo "Waiting for $address to become available..."
-        sleep 5
-    done
-    echo "$address is available!"
-}
-
-check_address "http://localhost:9001"
-check_address "http://localhost:8080"
+echo "all services are running!"
