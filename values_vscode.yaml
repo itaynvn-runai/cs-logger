@@ -9,7 +9,7 @@ extraInitContainers: |
         curl -L https://github.com/mfoulks3200/har-analyzer/releases/download/0.0.7/har-analyzer-0.0.7.vsix > har-analyzer.vsix
         code-server --install-extension har-analyzer.vsix
         code-server --install-extension IBM.output-colorizer
-        echo '{"workbench.colorTheme": "Visual Studio Dark", "workbench.editorLargeFileConfirmation": 30}' > /home/coder/.local/share/code-server/User/settings.json
+        echo '{"workbench.colorTheme": "Visual Studio Dark", "workbench.editorLargeFileConfirmation": 30, "files.associations": {"*": "log"}}' > /home/coder/.local/share/code-server/User/settings.json
         cat /home/coder/.local/share/code-server/User/settings.json
     volumeMounts:
       - name: data

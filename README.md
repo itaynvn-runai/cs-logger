@@ -16,17 +16,26 @@ pros:
 ## Operation
 if the cs-logger stack already installed on cluster, run this to expose minio and Grafana locally:
 ```
-bash fast_operation.sh
+bash operation.sh
+```
+
+the `cs` namespace is used by default, to choose a different namespace run:
+```
+bash operation.sh NAMESPACE
 ```
 
 ### Upload log archives
 1. enter minio UI: [http://localhost:9001/](http://localhost:9001/) (creds are in values/secret)
-2. choose the "**new-log-archives**" bucket
-3. upload the `tar.gz` file
+2. choose the "**new-log-archives**" bucket for `*.tar.gz` archives, or "**new-single-files**" bucket for any other text file
+3. Drag and drop the file to the bucket
+
+### Upload any other text file
+
 
 ### Display logs
 1. enter VScode: [http://localhost:8080/](http://localhost:8080/) (password is `admin`)
-2. select "**Files**" tab on the left panel, then choose the folder with the name of the log archive you uploaded.
+2. select "**Files**" tab on the left panel
+3. archives are extracted to subfolders with the same name (plus a human-formatted date appended to it), regular files will be available in the root folder
 
 ### tmux cheatsheet
 - **list running sessions**: `tmux ls`
@@ -38,7 +47,12 @@ bash fast_operation.sh
 
 run this to deploy cs-logger stack in an empty cluster:
 ```
-bash fast_deployment.sh
+bash deployment.sh
+```
+
+the `cs` namespace is used by default, to choose a different namespace run:
+```
+bash deployment.sh NAMESPACE
 ```
 
 stack includes:
@@ -46,8 +60,3 @@ stack includes:
 - **minio**: S3 compatible object storage, provides a simple file upload interface
 - **Log archive handler**: automation script for handling log archives files
 - **VScode**: web-based version of VScode, for displaying log files
-
-## Future improvements
-- have the customers send the log files directly to the object storage
-(eliminating the need to send attach the file to salesforce ticket, and us downloading it)
-- (requires RnD approval/participation) send log files to the object storage, **directly** from the `runai-adm` CLI tool
