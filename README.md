@@ -24,18 +24,19 @@ the `cs` namespace is used by default, to choose a different namespace run:
 bash operation.sh NAMESPACE
 ```
 
+the script creates 2 detached shells using `tmux` utility, for exposing minio and vscode UI locally.
+
 ### Upload log archives
 1. enter minio UI: [http://localhost:9001/](http://localhost:9001/) (creds are in values/secret)
 2. choose the "**new-log-archives**" bucket for `*.tar.gz` archives, or "**new-single-files**" bucket for any other text file
-3. Drag and drop the file to the bucket
-
-### Upload any other text file
-
+3. Drag and drop the file to the bucket (it will be immediatly processed and then moved to the **done** bucket by the file handler)
 
 ### Display logs
 1. enter VScode: [http://localhost:8080/](http://localhost:8080/) (password is `admin`)
-2. select "**Files**" tab on the left panel
-3. archives are extracted to subfolders with the same name (plus a human-formatted date appended to it), regular files will be available in the root folder
+2. select "**Files**" tab on the left panel (the root folder `/data/extracted-logs` will be open by default)
+3. **archives** are extracted into subfolders with the same name (plus a human-formatted date appended to it), for example:
+archive file `runai-logs-1583069400.tar.gz` will be extracted into subfolder `runai-logs-1583069400_01-03-2020_15-30`
+4. **text files** will be available in the root folder.
 
 ### tmux cheatsheet
 - **list running sessions**: `tmux ls`
